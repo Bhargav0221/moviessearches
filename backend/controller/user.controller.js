@@ -1,6 +1,8 @@
 
 import User from '../models/user.model.js';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import "dotenv/config";
 import  createtoken  from '../jwt/createtoken,js';
 export const signup= async(req,res)=>{
     const{name,email,password}=req.body;
@@ -51,7 +53,7 @@ export const login=async(req,res)=>{
     return res.status(400).json("invalid credentials");
   }
    const token= createtoken(user.id,res);
-   console.log(token);  
+   
 res.status(200).json({
   message: "user created successfully",
   user: {
@@ -69,3 +71,29 @@ catch(error)
     console.log(error); 
 }
 }
+export const auth=async(req,res)=>{
+  try{
+   
+  const token = req.header('Authorization').split(" ")[1];
+  console.log("token is", token);
+  if(!token)
+  {
+    return res.status(401).json({message:"No token provided"});
+  }
+   const verifieded=jwt.verify(token, process.env.JWT_SECRET_KEY);
+  if(!verifieded)
+  {
+    return res.status(401).json({message:"Invalid token"});
+  }
+  return res.status(200).json({
+    message: "User authenticated successfully",
+});
+  }
+catch (error) {
+    if (error.name === "TokenExpiredError") {
+      console.log("Token expired");
+      return res.status(401).json({ message: "Token expired" });
+    }
+    console.error("Error in auth:", error);
+    return res.status(500).json({ message: error.message });
+  }}
